@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+    />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <v-app>
+        <v-content>
+          <v-toolbar fixed dark color="primary">
+            <!-- <v-toolbar-side-icon></v-toolbar-side-icon> -->
+            <v-toolbar-title class="white--text"
+              >Cloud Explorer</v-toolbar-title
+            >
+            <v-spacer></v-spacer>
+            <v-text-field
+              v-model="search"
+              append-icon="search"
+              label="Search"
+              single-line
+              hide-details
+            ></v-text-field>
+          </v-toolbar>
+          <v-container fluid>
+            <br />
+            <br />
+            <br />
+            <br />
+            <v-data-table
+              :rows-per-page-items="[100, 200, 300]"
+              :headers="headers"
+              :items="ack"
+              :search="search"
+              class="elevation-1"
+            >
+              <template v-slot:items="props">
+                <td class="pa-0">
+                  <v-btn
+                    dark
+                    small
+                    depressed
+                    :color="colorVerb(props.item.verb)"
+                  >
+                    {{ props.item.verb }}
+                  </v-btn>
+                </td>
+                <td>{{ props.item.cloudName }}</td>
+                <td>
+                  {{
+                    props.item.description || "No description for this machine"
+                  }}
+                </td>
+                <td>{{ props.item.args }}</td>
+                <td>{{ props.item.url }}</td>
+
+                <td class="justify-center layout px-0">
+                  <v-btn @click="testApi = true" color="primary" icon>
+                    <v-icon>
+                      directions_run
+                    </v-icon>
+                  </v-btn>
+                </td>
+              </template>
+            </v-data-table>
+          </v-container>
+
+          <v-dialog max-width="50%" v-model="testApi">
+            <v-toolbar color="primary" dark>
+              <v-toolbar-title>Test</v-toolbar-title>
+            </v-toolbar>
+            <v-card>
+              <v-card-text>
+                Sorry this is not yet available for now
+              </v-card-text>
+            </v-card>
+          </v-dialog>
+        </v-content>
+      </v-app>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+    <script>
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            search:"",
+            testApi: false,
+            actions: <%- JSON.stringify(actions) %>,
+            headers: [
+            {
+              text: 'VERB', value:"verb"
+            },
+            { text: 'CLOUD NAME', value: 'cloud-name' },
+            { text: 'DESCRIPTION', value: 'description' },
+            { text: 'ARGUMENTS', value: 'args' },
+            { text: 'URL', value: 'url' },
+            { text: 'Test', value: 'test' }
+          ],
+          ack:[]
+          };
+        },
+        methods:{
+          colorVerb(verb){
+            var color
+            if(verb.match(/get/gi)){
+              color =  "green"
+            } else if(verb.match(/post/gi)){
+              color = "purple"
+            } else if(verb.match(/delete/gi)){
+              color = "pink"
+            } else if(verb.match(/patch/gi)){
+              color = "orange"
+            } else {
+              color = "green"
+            }
+        return color
+          }
+        },
+        mounted(){
+          this.ack.length = 0
+          for(let action in this.actions){
+          this.ack.push({
+            cloudName: action,
+            verb: this.actions[action].verb,
+            description: this.actions[action].description,
+            args: this.actions[action].args,
+            url: this.actions[action].url
+          })
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
