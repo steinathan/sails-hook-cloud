@@ -2,10 +2,12 @@ module.exports = function() {
   var guess = require("./private/guess-verb");
   var actions = sails._actions;
   var endpointsByMethodName = {};
+
+  // loop through the actions
   for (let action in actions) {
     var bareActionName = _.last(action.split(/\//));
     var methodName = _.camelCase(bareActionName);
-    var expandedAddress;
+    var expandedAddress = {};
     try {
       expandedAddress = sails.getRouteFor(action);
     } catch (e) {
@@ -30,9 +32,9 @@ module.exports = function() {
     endpointsByMethodName[methodName] = {
       verb: guess(action).httpMethodGuess,
       action: action,
-      url: !_.isUndefined(sails.config.cloud.proxy)
+      url: !_.isUndefined(sails.config.cloud && sails.config.cloud.proxy)
         ? sails.config.cloud.proxy + action
-        : guess(action).pathPrefixGuess + action,
+        : guess(action).pathPrefixGuess + action
     };
     if (def && def.fn && def.inputs) {
       endpointsByMethodName[methodName].args = _.keys(def.inputs);

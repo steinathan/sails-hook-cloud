@@ -1,48 +1,42 @@
-  /**
- * qs hook
+/**
+ * sails hook cloud
  *
- * @description :: A hook definition.  Extends Sails by adding shadow routes, implicit actions, and/or initialization logic.
+ * @description :: A cloud hook definition.
  * @docs        :: https://sailsjs.com/docs/concepts/extending-sails/hooks
  */
-var builtRoutes = require("./built-routes"),
-  { resolve } = require("path"),
-  routes_ = require("./private/register-routes");
+let builtRoutes = require("./built-routes");
+require("./private/register-routes");
+
 module.exports = function defineCloudHook(sails) {
   return {
-    // dc5a81205d4e4a069729323c7a5dec59
     /**
      * Runs when this Sails app loads/lifts.
      */
     async initialize() {
-      sails.log.warn("cloud", sails.config.cloud);
       sails.log.info("Initializing Cloud hook (`Cloud`)");
-      sails.log.warn(
-        "[cloud] This hook overides the default `views` folder of your app.."
-      );
-    },
-    defaults(req, res) {
-      sails.config.paths.views = resolve(__dirname, "views");
-      sails.config.views.layout = resolve(__dirname, "views/layout");
+      // check if `config hook` is set
+      if (_.isUndefined(sails.config.cloud)) {
+        sails.log.error("Could not find `hooks config` for proxy request");
+      }
     },
     routes: {
-      // after: {
-      //   "GET /log": async (req, res, next) => {
-      //     sails.router.bind("GET /log", {
-      //       action: "syncs/unsync-user",
-      //     });
-      //     return next();
-      //   },
-      // },
       after: {
+        /**
+         * @description GUI to see the built routes
+         */
         "GET /__cloud": async (req, res, next) => {
-          return res.render("prapp", {
+          return await res.view("../api/hooks/sails-hook-cloud/views/prapp", {
             actions: await builtRoutes(),
+            layout: false
           });
         },
+        /**
+         * @description Exposes the actions to the client agent
+         */
         "PATCH /__cloud/actions": async function(req, res, next) {
           return res.json(builtRoutes());
-        },
-      },
-    },
+        }
+      }
+    }
   };
 };

@@ -1,3 +1,7 @@
+/**
+ * @description Makes smart VERB guesses of an action
+ * @returns {httpMethodGuess, pathPrefixGuess}
+ */
 module.exports = function(action) {
   var stem = _.last(action.split(/\//));
   // Make some guesses about how to build an appropriate route for this action:
