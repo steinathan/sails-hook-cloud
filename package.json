@@ -1,9 +1,34 @@
 {
   "name": "sails-hook-cloud",
-  "version": "0.0.0",
-  "description": "a brief description of your hook",
+  "version": "0.1.0",
+  "description": "Sails cloud hook for automatting your Action routes",
   "main": "index.js",
   "sails": {
     "isHook": true
+  },
+  "keywords": [
+    "sails",
+    "cloud hook",
+    "hook",
+    "sails hook cloud",
+    "sails auto routing",
+    "auto routing",
+    "register action"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/navicstein/sails-hook-cloud.git"
+  },
+  "bugs": {
+    "url": "https://github.com/navicstein/sails-hook-cloud/issues"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "author": "Navicstein Rotciv <navicsteinrotciv@gmail.com>",
+  "prettier": {
+    "semi": true,
+    "singleQuote": true
   }
 }
