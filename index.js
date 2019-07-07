@@ -4,8 +4,8 @@
  * @description :: A cloud hook definition.
  * @docs        :: https://sailsjs.com/docs/concepts/extending-sails/hooks
  */
-let builtRoutes = require("./built-routes");
-require("./private/register-routes");
+let builtRoutes = require('./built-routes');
+require('./private/register-routes');
 
 module.exports = function defineCloudHook(sails) {
   return {
@@ -13,10 +13,10 @@ module.exports = function defineCloudHook(sails) {
      * Runs when this Sails app loads/lifts.
      */
     async initialize() {
-      sails.log.info("Initializing Cloud hook (`Cloud`)");
+      sails.log.info('Initializing Cloud hook (`Cloud`)');
       // check if `config hook` is set
       if (_.isUndefined(sails.config.cloud)) {
-        sails.log.error("Could not find `hooks config` for proxy request");
+        sails.log.error('Could not find `hooks config` for proxy request');
       }
     },
     routes: {
@@ -24,16 +24,21 @@ module.exports = function defineCloudHook(sails) {
         /**
          * @description GUI to see the built routes
          */
-        "GET /__cloud": async (req, res, next) => {
-          return await res.view("../api/hooks/sails-hook-cloud/views/prapp", {
-            actions: await builtRoutes(),
-            layout: false
-          });
+        'GET /__cloud': async (req, res, next) => {
+          // There should be a way of doing this thing automatically...
+          // ... without going to `node_modules` :(
+          return await res.view(
+            '../node_modules/sails-hook-cloud/views/prapp',
+            {
+              actions: await builtRoutes(),
+              layout: false
+            }
+          );
         },
         /**
          * @description Exposes the actions to the client agent
          */
-        "PATCH /__cloud/actions": async function(req, res, next) {
+        'PATCH /__cloud/actions': async function(req, res, next) {
           return res.json(builtRoutes());
         }
       }
