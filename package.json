@@ -6,6 +6,9 @@
   "sails": {
     "isHook": true
   },
+  "scripts": {
+    "patch-release": "npm version patch && npm publish && git push --follow-tags"
+  },
   "keywords": [
     "sails",
     "cloud hook",
