@@ -16,7 +16,9 @@ module.exports = function defineCloudHook(sails) {
       sails.log.info('Initializing Cloud hook (`Cloud`)');
       // check if `config hook` is set
       if (_.isUndefined(sails.config.cloud)) {
-        sails.log.error('Could not find `hooks config` for proxy request');
+        sails.log.error(
+          'Could not find `hooks config` for proxy request, proceeding anyway..'
+        );
       }
     },
     routes: {
@@ -29,8 +31,11 @@ module.exports = function defineCloudHook(sails) {
           // ... without going to `node_modules` :(
           return await res.view(
             '../node_modules/sails-hook-cloud/views/prapp',
+            // '../api/hooks/sails-hook-cloud/views/prapp.ejs',
             {
               actions: await builtRoutes(),
+              isInProduction:
+                sails.config.environment === 'production' ? true : false,
               layout: false
             }
           );

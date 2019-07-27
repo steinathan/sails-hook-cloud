@@ -13,18 +13,24 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
     />
+    <title>Sails Cloud Explorer | Automate your sails app</title>
   </head>
   <body>
-    <div id="app" v-cloak>
-      <v-app>
+    <div id="app">
+      <!-- Dont generate the view is sails is lifted in production
+       -->
+      <v-app app v-cloak>
         <v-content>
+          <!-- Only show in development -->
+          <% if(!isInProduction) { %>
           <v-toolbar fixed dark color="primary">
             <!-- <v-toolbar-side-icon></v-toolbar-side-icon> -->
             <v-toolbar-title class="white--text"
-              >Cloud Explorer</v-toolbar-title
+              >Sails cloud Explorer</v-toolbar-title
             >
             <v-spacer></v-spacer>
             <v-text-field
+              solo-inverted
               v-model="search"
               append-icon="search"
               label="Search"
@@ -33,111 +39,166 @@
             ></v-text-field>
           </v-toolbar>
           <v-container fluid>
-            <br />
-            <br />
-            <br />
-            <br />
             <v-data-table
-              :rows-per-page-items="[100, 200, 300]"
+              :search="search"
+              :items-per-page="30"
               :headers="headers"
               :items="ack"
-              :search="search"
+              :items-per-page="5"
               class="elevation-1"
             >
-              <template v-slot:items="props">
-                <td class="pa-0">
-                  <v-btn
-                    dark
-                    small
-                    depressed
-                    :color="colorVerb(props.item.verb)"
-                  >
-                    {{ props.item.verb }}
-                  </v-btn>
-                </td>
-                <td>{{ props.item.cloudName }}</td>
-                <td>
-                  {{
-                    props.item.description || "No description for this machine"
-                  }}
-                </td>
-                <td>{{ props.item.args }}</td>
-                <td>{{ props.item.url }}</td>
-
-                <td class="justify-center layout px-0">
-                  <v-btn @click="testApi = true" color="primary" icon>
-                    <v-icon>
-                      directions_run
-                    </v-icon>
-                  </v-btn>
-                </td>
+              <template v-slot:body="{ items }">
+                <tbody>
+                  <tr v-for="item in items" :key="item.name">
+                    <td>
+                      <v-chip dark :color="colorVerb(item['verb'])">{{
+                        item['verb']
+                      }}</v-chip>
+                    </td>
+                    <td>{{ item['cloud-name'] }}</td>
+                    <td>{{ item['description'] }}</td>
+                    <td>{{ item['args'] }}</td>
+                    <td>{{ item['url'] }}</td>
+                    <td>
+                      <v-btn @click="runApi(item)" dark color="primary"
+                        >test</v-btn
+                      >
+                    </td>
+                  </tr>
+                </tbody>
               </template>
             </v-data-table>
           </v-container>
 
           <v-dialog max-width="50%" v-model="testApi">
             <v-toolbar color="primary" dark>
-              <v-toolbar-title>Test</v-toolbar-title>
+              <v-toolbar-title>Testing {{ api['cloud-name'] }}</v-toolbar-title>
             </v-toolbar>
             <v-card>
               <v-card-text>
-                Sorry this is not yet available for now
+                <v-alert border="top" :type="msgType">
+                  {{ response || "Messages will be displayed here" }}
+                  </v-alert>
+
+                <v-form ref="form" lazy-validation>
+                  <v-text-field
+                    v-for="arg in api.args"
+                    :key="arg"
+                    v-model="formArgins[arg]"
+                    :label="arg.toUpperCase()"
+                    required
+                  ></v-text-field>
+                  <v-btn @click="makeAxiosReq(api)" color="primary">Run</v-btn>
+                </v-form>
               </v-card-text>
             </v-card>
           </v-dialog>
+          <% } else { %> 
+          <v-container fill-height grid-list-md>
+            <v-layout justify-center align-center column>
+              <img src="https://sailsjs.com/images/hero_squid.png"></img>
+              <h1 class="mt-4 display-3">Oop's</h1>
+              <v-divider class="mt-3 mb-3" inset></v-divider>
+              <p>
+                Sorry, sails is already lifted in prodcution - nothing to show
+              </p>
+            </v-layout>
+          </v-container>
+          <% } %>
         </v-content>
       </v-app>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+
+    <!-- DEPENDENCIES -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- // DEPENDENCIES -->
+
     <script>
       new Vue({
         el: "#app",
+        vuetify: new Vuetify(),
         data() {
           return {
-            search:"",
+            search: "",
             testApi: false,
-            actions: <%- JSON.stringify(actions) %>,
+            actions: <%- isInProduction ? "[]" : JSON.stringify(actions) %>,
             headers: [
-            {
-              text: 'VERB', value:"verb"
-            },
-            { text: 'CLOUD NAME', value: 'cloud-name' },
-            { text: 'DESCRIPTION', value: 'description' },
-            { text: 'ARGUMENTS', value: 'args' },
-            { text: 'URL', value: 'url' },
-            { text: 'Test', value: 'test' }
-          ],
-          ack:[]
+              {
+                text: "VERB",
+                value: "verb"
+              },
+              { text: "CLOUD NAME", value: "cloud-name" },
+              { text: "DESCRIPTION", value: "description" },
+              { text: "ARGUMENTS", value: "args" },
+              { text: "URL", value: "url" },
+              { text: "TEST", value: "test" }
+            ],
+            ack: [],
+            // holds our current api to test
+            api: {},
+            // holds our api's data to test
+            formArgins: {},
+            // holds our server response
+            response: "",
+            error: false,
+            msgType: "info",
+            // var to hold our env mode
+            isInProduction: <%= isInProduction %>
           };
         },
-        methods:{
-          colorVerb(verb){
-            var color
-            if(verb.match(/get/gi)){
-              color =  "green"
-            } else if(verb.match(/post/gi)){
-              color = "purple"
-            } else if(verb.match(/delete/gi)){
-              color = "pink"
-            } else if(verb.match(/patch/gi)){
-              color = "orange"
+        methods: {
+          runApi(api) {
+            this.testApi = true;
+            this.api = api;
+            //TODO: Automatically populate the input fields depending on thier `type`
+          },
+          makeAxiosReq(api) {
+            console.log(this.formArgins);
+            axios({
+              method: api.verb,
+              url: api.url,
+              data: this.formArgins
+            })
+              .then(({ data }) => {
+                this.msgType = "success"
+                this.response = data;
+              })
+              .catch(e => {
+                this.msgType = "error"
+                this.response = e;
+              });
+          },
+          /** color the action verb */
+          colorVerb(verb) {
+            var color;
+            if (verb.match(/get/gi)) {
+              color = "green";
+            } else if (verb.match(/post/gi)) {
+              color = "purple";
+            } else if (verb.match(/delete/gi)) {
+              color = "pink";
+            } else if (verb.match(/patch/gi)) {
+              color = "orange";
             } else {
-              color = "green"
+              color = "green";
             }
-        return color
+            return color;
           }
         },
-        mounted(){
-          this.ack.length = 0
-          for(let action in this.actions){
-          this.ack.push({
-            cloudName: action,
-            verb: this.actions[action].verb,
-            description: this.actions[action].description,
-            args: this.actions[action].args,
-            url: this.actions[action].url
-          })
+        mounted() {
+          // clear the stack
+          this.ack.length = 0;
+          // Push our stack
+          for (let action in this.actions) {
+            this.ack.push({
+              "cloud-name": action,
+              verb: this.actions[action].verb,
+              description: this.actions[action].description,
+              args: this.actions[action].args,
+              url: this.actions[action].url
+            });
           }
         }
       });
