@@ -1,6 +1,6 @@
 {
   "name": "sails-hook-cloud",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Sails cloud hook for automatting your Action routes",
   "main": "index.js",
   "sails": {
